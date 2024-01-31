@@ -97,33 +97,51 @@ fn part_one(filename: &str) -> usize {
     step_count
 }
 
-fn part_two(filename: &str) -> usize {
+fn gcd(a: u64, b: u64) -> u64 {
+    if a > 0 {
+        gcd(b % a, a)
+    } else {
+        b
+    }
+}
+
+fn lcm(a: u64, b: u64) -> u64 {
+    a * b / gcd(a, b)
+}
+
+fn part_two(filename: &str) -> u64 {
     let input = read_to_string(filename).expect("Could not read input file");
     let (instructions, nodes) = parse_input(input.as_str());
-    let mut current_keys: Vec<_> = nodes
+    let start_keys: Vec<_> = nodes
         .keys()
         .filter(|key| key.ends_with('A'))
         .map(|key| key.as_str())
         .collect();
 
-    let mut step_count = 0;
-    for instruction in instructions.iter().cycle() {
-        // println!("{}", current_keys.clone().join(","));
-        current_keys = current_keys
-            .iter()
-            .map(|key| {
-                let elements = nodes.get(*key).expect("Could not find expected key");
-                match instruction {
+    let steps: Vec<_> = start_keys
+        .iter()
+        .map(|key| {
+            let mut k = *key;
+            let mut current_step = 0;
+            for (step, instruction) in instructions.iter().cycle().enumerate() {
+                let elements = nodes.get(k).expect("Could not find expected key");
+
+                k = match instruction {
                     Instruction::Left => elements.0.as_str(),
                     Instruction::Right => elements.1.as_str(),
-                }
-             })
-            .collect();
-        step_count += 1;
-        if current_keys.iter().all(|key| key.ends_with('Z')) {
-            break;
-        }
-    }
+                };
 
-    step_count
+                if k.ends_with('Z') {
+                    current_step = step;
+                    break;
+                }
+            }
+
+            (current_step + 1) as u64
+        })
+        .collect();
+    steps
+        .into_iter()
+        .reduce(lcm)
+        .unwrap()
 }
