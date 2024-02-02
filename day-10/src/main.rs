@@ -112,29 +112,29 @@ impl Map {
             Direction::East => self.get_location(loc.0 + 1, loc.1),
         }
     }
-    fn calculate_pipe_length(&self) -> i32 {
-        let mut length = 0;
-        let mut current = self.get_start().unwrap();
+    fn calculate_pipe(&self) -> Vec<Location> {
         let mut last_move: Option<Direction> = None;
+        let mut path = vec![self.get_start().unwrap()];
         'outer: loop {
-            length += 1;
             for dir in Direction::get_all() {
                 if last_move.as_ref().is_some_and(|last_move| Direction::get_opposite(last_move) == dir) {
                     continue;
                 }
-                if self.get_at(&current).connects(&dir) && self.get_neighbor(&current, &dir).is_some_and(|next| self.get_at(&next).connects(&Direction::get_opposite(&dir))) {
-                    // println!("going {:?} from '{:?}' to '{:?}'", &dir, self.get_at(&current), self.get_at(&self.get_neighbor(&current, &dir).unwrap()));
-                    current = self.get_neighbor(&current, &dir).unwrap();
+                let current = path.last().unwrap();
+                if self.get_at(current).connects(&dir) && self.get_neighbor(current, &dir).is_some_and(|next| self.get_at(&next).connects(&Direction::get_opposite(&dir))) {
+                    // println!("going {:?} from '{:?}' to '{:?}'", &dir, self.get_at(current), self.get_at(&self.get_neighbor(current, &dir).unwrap()));
+                    let next = self.get_neighbor(current, &dir).unwrap();
                     last_move = Some(dir);
-                    if self.get_at(&current) == &Terrain::Start {
+                    if self.get_at(&next) == &Terrain::Start {
                         break 'outer;
                     } else {
+                        path.push(next);
                         continue 'outer;
                     }
                 }
             }
         }
-        length
+        path
     }
 }
 
@@ -160,5 +160,5 @@ fn part_one(filename: &str) -> i32 {
     let input = read_to_string(filename).expect("Could not read input file");
     let map = Map::new(input).expect("Could not parse Map");
     // round up with int division
-    (map.calculate_pipe_length() + 1) / 2
+    (map.calculate_pipe().len() as i32 + 1) / 2
 }
